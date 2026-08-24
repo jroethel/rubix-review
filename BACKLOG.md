@@ -16,8 +16,8 @@ Severity in brackets.
 Items marked (loop-stack) land in the consumer repo; they are tracked here because this pass surfaced them and the two repos version together.
 
 - [High] Onboarding: README block + clone story. (both repos)
-  The remote is being created by the owner.
-  Once it exists: add a "Getting rubix-review" block to THIS repo's README (clone URL, `bash install.sh`, the `RUBIX_INSTALL_DIR` override), and mirror loop-stack's ringer onboarding block in loop-stack's README (clone URL, `LOOP_STACK_RUBIX_ROOT` override).
+  The remote exists (github.com/jroethel/rubix-review); the README onboarding blocks in both repos remain open.
+  Remaining: add a "Getting rubix-review" block to THIS repo's README (clone URL, `bash install.sh`, the `RUBIX_INSTALL_DIR` override), and mirror loop-stack's ringer onboarding block in loop-stack's README (clone URL, `LOOP_STACK_RUBIX_ROOT` override).
   Done when: a fresh host can go from nothing to a wired contract using only README text, no tribal knowledge.
 
 - [Med-High] Fail-closed recovery text carries the literal fix. (loop-stack)
