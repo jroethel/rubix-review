@@ -1,0 +1,4 @@
+rubix-review is a standalone review skill for proposed artifacts - plans, specs, designs, PRDs, drafts - that runs a forward-looking two-lens pass before anything gets built: Lens A takes the seat of the professional most impacted by the artifact, Lens B does a cold craft read against best practice, and both run as parallel fresh-context subagents that see only the artifact and its optional spec, never the caller's conversation.
+Invoke it ad hoc with "use the rubix review", "rubix this", or "rubix review on <artifact>".
+Input is a required artifact path plus an optional spec/criteria path and an optional high-stakes flag, and with no spec it still runs and returns findings rather than erroring.
+Output is side-by-side findings per lens, each finding carrying {finding, severity, rationale, concrete suggested change}, with the reviewer never rewriting the artifact and the caller picking what gets incorporated.
