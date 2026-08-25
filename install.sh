@@ -2,7 +2,7 @@
 # Idempotent installer for the rubix-review skill.
 # Materializes the skill at $RUBIX_INSTALL_DIR/rubix-review, preferring a
 # symlink to this checkout and falling back to a copy when symlinks are
-# unavailable (e.g. WSL/Windows filesystems), or when LOOP_STACK_FORCE_COPY=1.
+# unavailable (e.g. WSL/Windows filesystems), or when RUBIX_FORCE_COPY=1.
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -28,9 +28,19 @@ can_symlink() {
 
 # Remove any prior install (ours alone; nothing else in INSTALL_DIR is touched)
 # so both branches below are idempotent, including across mode switches.
+# Refuse a non-absolute destination so a relative or mistyped RUBIX_INSTALL_DIR
+# can never turn the rm -rf below loose on the wrong tree.
+case "$INSTALL_DIR" in
+  /*) ;;
+  *) echo "RUBIX_INSTALL_DIR must be an absolute path (got: $INSTALL_DIR)" >&2; exit 1;;
+esac
+[ "$DEST" != "/" ] || { echo "refusing to operate on /" >&2; exit 1; }
 rm -rf "$DEST"
 
-if [ "${LOOP_STACK_FORCE_COPY:-0}" != "1" ] && can_symlink; then
+# RUBIX_FORCE_COPY forces the copy branch; LOOP_STACK_FORCE_COPY is the
+# deprecated alias, honored for one release until loop-stack migrates.
+FORCE_COPY="${RUBIX_FORCE_COPY:-${LOOP_STACK_FORCE_COPY:-0}}"
+if [ "$FORCE_COPY" != "1" ] && can_symlink; then
   ln -sfn "$REPO" "$DEST"
   echo "installed rubix-review -> $DEST (symlink to $REPO)"
 else
