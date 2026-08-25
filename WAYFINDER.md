@@ -1,0 +1,9 @@
+<!--
+generated: 2026-08-25T18:16:40Z
+source of truth: GitHub issues
+regenerate: scripts/gen-mirrors.sh .
+DO NOT EDIT
+-->
+# Wayfinder
+
+(no open wayfinder maps)
