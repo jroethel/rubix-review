@@ -1,5 +1,5 @@
 <!--
-generated: 2026-08-25T21:07:26Z
+generated: 2026-08-26T02:31:24Z
 source of truth: GitHub issues
 regenerate: scripts/gen-mirrors.sh .
 DO NOT EDIT
@@ -8,8 +8,6 @@ DO NOT EDIT
 
 | # | title | labels | updated |
 |---|---|---|---|
-| 8 | [Medium] Copy-mode staleness detection (both repos) | idea | 2026-08-25T18:16:29Z |
-| 7 | [Medium] Drift guard: checksum, not substring grep; resolve configured paths (loop-stack) | idea | 2026-08-25T18:16:27Z |
 | 4 | Native-Windows install, and an npx cross-platform installer | idea | 2026-08-25T18:15:58Z |
 | 3 | Lens-default behaviors | idea | 2026-08-25T18:15:57Z |
 | 2 | Raw-idea entry point for Rubix pass | idea | 2026-08-25T18:15:55Z |
