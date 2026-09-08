@@ -190,6 +190,30 @@ local_list() {                # emit gh-shaped JSON for open issues
   done
   printf '%s]\n' "$out"
 }
+local_list_closed() {          # arg: cutoff YYYY-MM-DD - mirror local_list for closed issues on/after it
+  local cutoff="$1" first=1 out="[" f state num title upd labels_raw labels_json l
+  shopt -s nullglob
+  for f in "$ISSUE_DIR"/*.md; do
+    state="$(fm "$f" state)"; [ "$state" = "closed" ] || continue
+    upd="$(fm "$f" updated)"
+    [ "$upd" \< "$cutoff" ] && continue   # lexical: an ISO stamp on/after the date clears its own prefix
+    num="$(fm "$f" number)"; title="$(fm "$f" title)"
+    labels_raw="$(fm "$f" labels)"
+    labels_json=""
+    if [ -n "$labels_raw" ]; then   # guard: iterating an empty array under set -u aborts on bash 3.2 (macOS)
+      IFS=',' read -ra _larr <<< "$labels_raw"
+      for l in "${_larr[@]}"; do
+        l="$(printf '%s' "$l" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+        [ -n "$l" ] || continue
+        [ -n "$labels_json" ] && labels_json="$labels_json,"
+        labels_json="$labels_json{\"name\":\"$(json_escape "$l")\"}"
+      done
+    fi
+    [ "$first" -eq 1 ] || out="$out,"; first=0
+    out="$out{\"number\":$num,\"title\":\"$(json_escape "$title")\",\"labels\":[$labels_json],\"updatedAt\":\"$(json_escape "$upd")\"}"
+  done
+  printf '%s]\n' "$out"
+}
 
 # --- cross-backend dispatch helpers (shared by the public verbs and status/claim/done) ---
 do_label() {                 # args: num name add|remove - raw op; the agent:done guard lives in the public verb only
@@ -274,6 +298,19 @@ do_list() {                   # the list verb's backend dispatch; next-eligible 
     github) gh_guard; gh issue list --state open --limit 1000 --json number,title,labels,updatedAt ;;
     gitlab) glab_guard; gitlab_list ;;
     local)  local_list ;;
+    *)      fail "unknown tracker mode '$mode' in $RS (expected github, gitlab, or local)" ;;
+  esac
+}
+do_list_closed() {             # arg: cutoff YYYY-MM-DD - issues closed on or after it, for the done lane
+  local cutoff="$1" mode
+  mode="$(tracker_mode_get)" || fail "no tracker mode declared in $RS (run loop-setup)"
+  case "$mode" in
+    github) gh_guard
+            gh issue list --state closed --search "closed:>=$cutoff" --limit 200 \
+              --json number,title,labels,updatedAt ;;
+    gitlab) echo "list-closed: not supported on the gitlab backend" >&2
+            printf '[]\n' ;;
+    local)  local_list_closed "$cutoff" ;;
     *)      fail "unknown tracker mode '$mode' in $RS (expected github, gitlab, or local)" ;;
   esac
 }
@@ -389,6 +426,7 @@ Usage: tracker.sh <command> [args]
   host                           print the GitLab host derived from origin
   group                          print the first path segment of origin (the backlog group)
   list                           print a gh-shaped issue-JSON array for open issues
+  list-closed <YYYY-MM-DD>    print a gh-shaped issue-JSON array for issues closed on or after the date
   children <num>                 print a gh-shaped sub-issue-JSON array for a wayfinder map's children (github only)
   create --label L --title T --body B   create an issue, print its number
   close <num>                    close an issue by number (human-only; agents complete via 'done')
@@ -423,6 +461,10 @@ case "$sub" in
     ;;
   list)
     do_list
+    ;;
+  list-closed)
+    [ $# -eq 1 ] || { usage; exit 2; }
+    do_list_closed "$1"
     ;;
   children)
     [ $# -eq 1 ] || fail "children: requires <num>"

@@ -13,6 +13,8 @@
 #      match <date>.<tokens>.<slug>.md
 #   g  roadmap R-tag defect: a duplicate or malformed [R...] tag in ROADMAP.md (absence is
 #      never flagged)
+#   h  consumed-unarchived handoff: every action in ## Next actions carries a disposition but
+#      the file still sits in docs/handoffs/; gated by lifecycle-lint-since:
 # Class f runs only when filename-grammar-since: exists in config/repo-state.md; class g runs
 # whenever ROADMAP.md exists. Classes a (supersession half) and b are pure filesystem and
 # always run. The issue-link checks query the tracker seam and run only when `tracker.sh mode
@@ -239,6 +241,25 @@ if [ -f ROADMAP.md ] && [ -n "$(grep -oE '\[R[^]]*\]' ROADMAP.md 2>/dev/null)" ]
     [ -n "$t" ] || continue
     lint g ROADMAP.md "$kind R-tag '$t'"
   done <<< "$gfindings"
+fi
+
+# (h) consumed but unarchived handoff - runs only when the adopting key is present (same
+# absence-skips pattern as class f). Handoffs dated before lifecycle-lint-since: are grandfathered.
+# The derivation has one home: handoff-log.sh state, called script-relative like TRACKER above.
+HSINCE=""
+[ -f config/repo-state.md ] && HSINCE="$(fm config/repo-state.md lifecycle-lint-since)"
+if [ -n "$HSINCE" ] && [ -x "$SCRIPT_DIR/handoff-log.sh" ]; then
+  for f in docs/handoffs/*.md; do
+    [ -e "$f" ] || continue
+    d="$(date_of "$(basename "$f")")"
+    case "$d" in
+      [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) ;;
+      *) continue ;;
+    esac
+    [[ "$d" < "$HSINCE" ]] && continue
+    [ "$("$SCRIPT_DIR/handoff-log.sh" state "$f")" = consumed-unarchived ] || continue
+    lint h "$f" "every action carries a disposition but the handoff is still live (archive it; lifecycle since $HSINCE)"
+  done
 fi
 
 exit "$found"
